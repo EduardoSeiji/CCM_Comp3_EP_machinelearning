@@ -18,7 +18,128 @@
 # created just for code testing
 def main():
 
-main()
+	teste = input("Digite o item que deseja testar: ")
+
+	#---------------------------------------------------
+
+	# test a
+	if(teste == 'a'):
+
+		n = 64
+		m = 64
+
+		# create the w matrix
+		# create a null matrix
+		w = matrix = n*[m*[0]]
+		
+		# fill it properly
+		for i in range(n):
+		
+			for j in range(m):
+		
+				if(i == j): w[i][j] = 2
+
+				elif(abs(i-j) == 1): w[i][j] = 1
+
+				elif(abs(i-j) > 1): w[i][j] = 0
+
+		# print matrix just for checking
+		printMatrix(w)
+
+		# create b vector
+		b = n*[1]
+
+		# print vector just for checking
+		printVector(w)
+
+	#---------------------------------------------------
+
+	# test b
+	if(teste == 'b'):
+
+		n = 20
+		m = 17
+
+		# create the w matrix
+		# create a null matrix
+		w = matrix = n*[m*[0]]
+		
+		# fill it properly
+		for i in range(n):
+		
+			for j in range(m):
+
+				if(abs(i-j) <= 4): w[i][j] = 1/(i+j-1)
+
+				elif(abs(i-j) > 4): w[i][j] = 0
+
+		# print matrix just for checking
+		printMatrix(w)
+
+		# create b vector
+		b = n*[0]
+
+		# fill it properly
+		for i in range(n):
+
+			b[i] = i
+
+		# print vector just for checking
+		printVector(w)
+
+	#---------------------------------------------------
+	
+	# test c
+	if(teste == 'b'):
+
+		n = 64
+		p = 64
+
+		# create the w matrix
+		# create a null matrix
+		w = matrix = n*[p*[0]]
+		
+		# fill it properly
+		for i in range(n):
+		
+			for j in range(m):
+
+				if(i == j): w[i][j] = 2
+
+				elif(abs(i-j) == 1): w[i][j] = 1
+
+				elif(abs(i-j) > 1): w[i][j] = 0
+
+		# print matrix just for checking
+		printMatrix(w)
+
+		# define m = 3, solving 3 simultaneous systems
+		#(???)
+
+	# test d
+	if(teste == 'b'):
+
+		n = 20
+		m = 17
+
+		# create the w matrix
+		# create a null matrix
+		w = matrix = n*[m*[0]]
+		
+		# fill it properly
+		for i in range(n):
+		
+			for j in range(m):
+
+				if(abs(i-j) <= 4): w[i][j] = 1/(i+j-1)
+
+				elif(abs(i-j) > 4): w[i][j] = 0
+
+		# print matrix just for checking
+		printMatrix(w)
+
+		# define m = 3, solving 3 simultaneous systems
+		#(???)
 
 #=========================================================
 
@@ -28,10 +149,10 @@ def computeCosSin1(w, i, j, k):
 
 	# compute sin(teta) and cos(teta)
 
-	if (abs(w[i,k]) > abs(w[j,k])):
+	if (abs(w[i][k]) > abs(w[j][k])):
 
 		# compute tau
-		T = -float(w[j,k])/w[i,k]
+		T = -float(w[j][k])/w[i][k]
 
 		# compute cos(teta)
 		cos = 1/( ( 1+T**2 ) ** (1/2) )
@@ -42,7 +163,7 @@ def computeCosSin1(w, i, j, k):
 	else:
 
 		# compute tau
-		T = -float(w[i,k])/w[j,k]
+		T = -float(w[i][k])/w[j][k]
 
 		# compute sin(teta)
 		sin = 1/( ( 1+T**2 ) ** (1/2) )
@@ -59,10 +180,10 @@ def computeCosSin1(w, i, j, k):
 def computeCosSin2(w, i, j, k):
 
 	# compute cos(teta)
-	cos = w[i,k] / (w[i,k]**2 + w[j,k]**2)**(1/2)
+	cos = w[i][k] / (w[i][k]**2 + w[j][k]**2)**(1/2)
 
 	# compute sin(teta)
-	sin = -w[j,k] / (w[i,k]**2 + w[j,k]**2)**(1/2)
+	sin = -w[j][k] / (w[i][k]**2 + w[j][k]**2)**(1/2)
 
 	return cos, sin
 
@@ -76,11 +197,11 @@ def RotGivens(w, i, j, k):
 
 	for r in range(1,m+1):
 
-		aux = cos*w[i,r] - sin*w[j,r]
+		aux = cos*w[i][r] - sin*w[j][r]
 
-		w[j,r] = sin*w[i,r] + cos*w[j,r]
+		w[j][r] = sin*w[i][r] + cos*w[j][r]
 
-		w[i,r] = aux
+		w[i][r] = aux
 
 #=========================================================
 
@@ -94,7 +215,7 @@ def QRFatoration(w):
 
 			i = j - 1
 
-			if (w[j,k] != 0): 
+			if (w[j][k] != 0): 
 
 				# apply a Givens' Rotation to matrix W
 				RotGivens(w, i, j, k)
@@ -111,7 +232,7 @@ def function2(w, b, x):
 
 			i = j-1
 
-			if(w[j,k] != 0):
+			if(w[j][k] != 0):
 
 				# apply a Givens' Rotation to matrix W
 				RotGivens1(w, i, j, k)
@@ -124,9 +245,9 @@ def function2(w, b, x):
 
 		for j in range(k+1,m):
 
-			summation += w[k,j]*x[j]
+			summation += w[k][j]*x[j]
 
-		x[k] = (b[k] - summation) / w[k,k]
+		x[k] = (b[k] - summation) / w[k][k]
 
 
 
@@ -140,7 +261,7 @@ def printMatrix(matrix):
 
 		for j in range(len(matrix[i])):
 
-			print(matrix[i,j])
+			print(matrix[i][j])
 
 		print()
 
@@ -148,3 +269,15 @@ def printMatrix(matrix):
 
 #=========================================================
 
+# print the given vector
+# just for testing
+def printVector(vector):
+
+	for i in range(0,len(vector)):
+
+		print(vector[i], end = ' ')
+
+	print()
+
+#=========================================================
+main()
