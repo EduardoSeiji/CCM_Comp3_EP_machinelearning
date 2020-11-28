@@ -290,7 +290,7 @@ def QRfactorization(w,b):
 # apply sucessives Givens' Rotations in a convenient order
 def QRfactorizationSimultaneous(w,A):
 
-	n = len(w)
+	n = len(A)
 	p = len(w[0])
 	m = len(A[0])
 

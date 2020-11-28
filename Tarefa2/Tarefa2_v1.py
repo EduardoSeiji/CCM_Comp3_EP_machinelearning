@@ -12,7 +12,6 @@
 import math
 import numpy as np
 
-# created just for code testing
 def main():
 
 	# matrix A
@@ -23,39 +22,45 @@ def main():
 	p = 2
 
 	# determine H and W
-	W,H = function(A,n,m,p)
-
-	print('Matrix H')
-	print('-'*2*m)
+	W,H = factorizate(A,n,m,p)
+	
+	# print W
+	print('-'*10)
+	print('Matrix W')	
+	print('-'*10)
+	print(np.matrix(W))
+	
+	# print H
+	print('-'*10)
+	print('Matrix H')	
+	print('-'*10)
 	print(np.matrix(H))
-	print('-'*2*m)
 	print()
 
-	print('Matrix W')
-	print('-'*2*p)
-	print(np.matrix(W))
-	print('-'*2*p)
+	# get the matrix A by multiplying W and H, just to make the checking easier
+	A = np.dot(W,H)
+
+	# print A
+	print('-'*15)
+	print('Matrix A = WH')
+	print('-'*15)
+	print(np.matrix(A))
 
 #=========================================================
 
-def function(A,n,m,p):
+def factorizate(A,n,m,p):
 
-	# generate a random (all entries positive) matrix w
-	#W = np.empty((n,p))
-	W = np.random.rand(n,p) # [0,1[
-
+	# generate a random matrix W, with all entries in [0,1[
+	W = np.random.rand(n,p)
 
 	# store a copy of A (not a reference to A!)
 	Acopy = np.copy(A)
 
-	# calculate the error E
-
 	itmax = 0
-
-	Einitial = 0
+	Einitial = 1
 	Efinal = 0
 
-	while 1:
+	while(abs(Einitial-Efinal) > 1e-5 or itmax < 100):
 
 		itmax += 1
 
@@ -66,6 +71,7 @@ def function(A,n,m,p):
 
 			for i in range(n):
 
+
 				s += (W[i][j])**2
 
 			for i in range(n):
@@ -73,19 +79,8 @@ def function(A,n,m,p):
 				W[i][j] = W[i][j]/math.sqrt(s)
 
 		# solve the MMQ problem W H = A, determining H
-		# ver como usar a tarefa1 p isso
-		H = QRFatorationSimultaneous(W,A)
-		# ah nao, cipa a tarefa 2 seja implementar o algoritmo p isso
-
-
-		# redefine H
-		'''
-		for i in range(p):
-
-			for j in range(m):
-
-				H[i][j] = max(0,H[i][j])
-		'''
+		H = QRfactorizationSimultaneous(W,A)
+	
 		H = H.clip(min = 1e-10)
 
 		# compute At, transposed
@@ -97,35 +92,24 @@ def function(A,n,m,p):
 		# ver como usar a tarefa1 p isso
 		Hcopy = np.copy(H)
 		Ht = H.T
-		Wt = QRFatorationSimultaneous(Ht,At)
+		Wt = QRfactorizationSimultaneous(Ht,At)
 		# ah nao, cipa a tarefa 2 seja implementar o algoritmo p isso
 
 
 		# compute W
 		W = Wt.T
 
-		# redefine W
-		'''
-		for i in range(n):
-
-			for j in range(p):
-
-				W[i][j] = max(0,W[i][j])
-		'''
 		W = W.clip(min = 1e-10)
 
-		# calcula o erro
+		# calculate the error
 		Einitial = Efinal
 		Efinal = calculateError(Acopy,W,Hcopy)
 
-
-
 		# conditions to exit the while
-		if(abs(Einitial-Efinal) < 1e-5): break
-		if(itmax == 100): break
+		#if(abs(Einitial-Efinal) < 1e-5): break
+		#if(itmax == 100): break
 
 	return W,Hcopy
-
 
 #=========================================================
 
@@ -156,7 +140,6 @@ def calculateError(Acopy, W, H):
 def computeCosSin1(w, i, j, k):
 
 	# compute sin(teta) and cos(teta)
-
 	if (abs(w[i][k]) > abs(w[j][k])):
 
 		# compute tau
@@ -198,36 +181,32 @@ def computeCosSin2(w, i, j, k):
 #=========================================================
 
 # apply 1 Givens' Rotation
-# the 3rd given algorithm
-def RotGivens(w, i, j, k, cos, sin, m): # m = len(w[0])
+# use vectorization instead of a for loop (like RotGivens2), much faster
+def RotGivens(w, i, j, k, cos, sin, m):
 
-	# FAZER VETORIZAÇÃO (MIKI FEZ ASSIM TB)
-	# SAULO DISSE Q ACELERA FORTE
-	# SUBSTITUI O FOR: 
-	# FAZER MAIS ROTGIVENS TESTANDO (ESSE DE CIMA É O MAIS RAPIDO)
-	'''
-	for r in range(0,m = len(w[0])): # OU PASSAR M COMO ENTRADA TB
-
-		aux = cos*w[i][r] - sin*w[j][r]
-
-		w[j][r] = sin*w[i][r] + cos*w[j][r]
-
-		w[i][r] = aux
-
-	'''
 	w[i,0:m] , w[j,0:m] = cos * w[i,0:m] - sin * w[j,0:m] , sin *w[i,0:m] + cos * w[j,0:m]
 
+#=========================================================
+
+# apply 1 Givens' Rotation
+# use a for loop, slower
+def RotGivens2(w, i, j, k, cos, sin, m):
+
+	for r in range(0,m):
+
+		aux = cos*w[i][r] - sin*w[j][r]
+		w[j][r] = sin*w[i][r] + cos*w[j][r]
+		w[i][r] = aux
 
 #=========================================================
 
 # apply sucessives Givens' Rotations in a convenient order
-# the 1st given algorithm
-def QRFatoration(w,b):
+def QRfactorization(w,b):
 
-	# TB DA P OBTER M ASSIM: m = w.shape[1]
 	n = len(w)
 	m = len(w[0])
 
+	# apply sucessives Givens Rotations, until W becomes R (a triangular superior matrix)
 	for k in range (0, m):
 
 		for j in range (n-1, k, -1):
@@ -236,19 +215,19 @@ def QRFatoration(w,b):
 
 			if (w[j][k] != 0): 
 
-				# apply a Givens' Rotation to matrix W
-
+				# compute cos(teta) and sin(teta) to be used in RotGivens
 				cos, sin = computeCosSin1(w, i, j, k)
 
-				RotGivens(w, i, j, k, cos, sin, m) # passar cos e sin como argumento
+				# apply a Givens' Rotation to matrix W and vector b
+				RotGivens(w, i, j, k, cos, sin, m)
 				RotGivens(b, i, j, k, cos, sin, 1)
 
-	# AGORA W JÁ É R
-	# LETSS
+	# With this, W was transformed in R (a triangular superior matrix)
 
-	# CRIAR VETOR X
+	# generates the vector x, which will hold the solution
 	x = np.zeros((m))
 
+	# solves the system to find each coordinate of vector x
 	for k in range(m-1,-1,-1):
 
 		summation = 0
@@ -259,22 +238,18 @@ def QRFatoration(w,b):
 
 		x[k] = (b[k] - summation) / w[k][k]
 
-	#printVector(x)
-	print(np.matrix(x))
-
-	# AE CARAI TEMO O X!!!
+	return x
 
 #=========================================================
 
 # apply sucessives Givens' Rotations in a convenient order
-# the 1st given algorithm
-def QRFatorationSimultaneous(w,A):
+def QRfactorizationSimultaneous(w,A):
 
-	# TB DA P OBTER M ASSIM: m = w.shape[1]
 	n = len(A)
 	p = len(w[0])
 	m = len(A[0])
 
+	# apply sucessives Givens Rotations, until W becomes R (a triangular superior matrix)
 	for k in range (0, p):
 
 		for j in range (n-1, k, -1):
@@ -283,19 +258,19 @@ def QRFatorationSimultaneous(w,A):
 
 			if (w[j][k] != 0): 
 
-				# apply a Givens' Rotation to matrix W
-
+				# compute cos(teta) and sin(teta) to be used in RotGivens
 				cos, sin = computeCosSin1(w, i, j, k)
 
-				RotGivens(w, i, j, k, cos, sin, p) # passar cos e sin como argumento
+				# apply a Givens' Rotation to matrix W and A
+				RotGivens(w, i, j, k, cos, sin, p)
 				RotGivens(A, i, j, k, cos, sin, m)
 
-	# AGORA W JÁ É R
-	# LETSS
+	# With this, W was transformed in R (a triangular superior matrix)
 
-	# CRIAR VETOR X
+	# generates the vector x, which will hold the solution
 	h = np.zeros((p,m))
 
+	# solves the system to find each entry of matrix A
 	for k in range(p-1,-1,-1):
 
 		for j in range(0,m):
@@ -315,13 +290,6 @@ def QRFatorationSimultaneous(w,A):
 				h[k][j] = (A[k][j] - summation) / w[k][k]
 
 	return h
-
-	#printVector(x)
-	#print(np.matrix(h))
-
-	# AE CARAI TEMO O X!!!
-
-#=========================================================
 
 #=========================================================
 main()
