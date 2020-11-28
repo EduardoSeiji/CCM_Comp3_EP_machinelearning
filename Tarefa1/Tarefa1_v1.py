@@ -3,31 +3,24 @@
 # 
 # Given W (nxm) and b (n), make an algorithm such that:
 #
-# 	transform (W -> R) and (b -> bTilde), by sucessives Givens' Rotations
+# 	transform (W -> R) and (b -> b~), by sucessives Givens' Rotations
 #
-#	solve the system Rx = bTilde
-#
-#
-#
-#
-#
-#
-#
+#	solve the system Rx = b~
 #---------------------------------------------------------
 
+# import the libraries math and numpy
 import math
 import numpy as np
 
-# created just for code testing
 def main():
 
-	teste = input("Digite o item que deseja testar: ")
+	test = input("Digite o item que deseja testar (a, b, c, d):")
 	print()
 
 	#---------------------------------------------------
 
 	# test a
-	if(teste == 'a'):
+	if(test == 'a'):
 
 		n = 64
 		m = 64
@@ -41,31 +34,28 @@ def main():
 		
 			for j in range(m):
 		
-				if(i == j): 
-					w[i][j] = 2
+				if(i == j): w[i][j] = 2
 
-				if(abs(i-j) == 1): 
-					w[i][j] = 1
+				if(abs(i-j) == 1): w[i][j] = 1
 
-				if(abs(i-j) > 1): 
-					w[i][j] = 0
-			print()
-
-		# print matrix just for checking
-		#printMatrix(w)
+				if(abs(i-j) > 1): w[i][j] = 0
 
 		# create b vector
 		b = np.ones((n,1))
 
-		# print vector just for checking
-		#printVector(w)
+		# runs the QR factorization
+		x = QRFatoration(w,b)
 
-		QRFatoration(w,b)
+		# print x
+		print('-'*20)
+		print('O vetor resposta é:')
+		print('-'*20)
+		print(np.matrix(x))
 
 	#---------------------------------------------------
 
 	# test b
-	if(teste == 'b'):
+	if(test == 'b'):
 
 		n = 20
 		m = 17
@@ -83,9 +73,6 @@ def main():
 
 				elif(abs((i+1)-(j+1)) > 4): w[i][j] = 0
 
-		# print matrix just for checking
-		#printMatrix(w)
-
 		# create b vector
 		b = np.zeros((n,1))
 
@@ -94,15 +81,19 @@ def main():
 
 			b[i] = i
 
-		# print vector just for checking
-		#printVector(b)
+		# runs the QR factorization
+		x = QRFatoration(w,b)
 
-		QRFatoration(w,b)
+		# print x
+		print('-'*20)
+		print('O vetor resposta é:')
+		print('-'*20)
+		print(np.matrix(x))
 
 	#---------------------------------------------------
 	
 	# test c
-	if(teste == 'c'):
+	if(test == 'c'):
 
 		n = 64
 		p = 64
@@ -123,14 +114,10 @@ def main():
 
 				elif(abs(i-j) > 1): w[i][j] = 0
 
-		# print matrix just for checking
-		#printMatrix(w)
-
 		# create matrix A
 		A = np.ones((n,3))
 
 		# fill it properly
-
 		for i in range(n):
 
 			A[i][0] = 1
@@ -139,15 +126,19 @@ def main():
 
 			A[i][2] = 2*(i+1) - 1
 
+		# runs QR factorization in in multiple systems simultaneously
+		h = QRFatorationSimultaneous(w,A)
 
-
-
-		QRFatorationSimultaneous(w,A)
+		# print h
+		print('-'*20)
+		print('A matriz resposta é:')
+		print('-'*20)
+		print(np.matrix(h))
 
 	#---------------------------------------------------
 
 	# test d
-	if(teste == 'd'):
+	if(test == 'd'):
 
 		n = 20
 		p = 17
@@ -166,14 +157,10 @@ def main():
 
 				elif(abs(i-j) > 4): w[i][j] = 0
 
-		# print matrix just for checking
-		#printMatrix(w)
-
 		# create matrix A
 		A = np.ones((n,3))
 
 		# fill it properly
-
 		for i in range(n):
 
 			A[i][0] = 1
@@ -182,8 +169,14 @@ def main():
 
 			A[i][2] = 2*(i+1) - 1
 
+		# runs QR factorization in in multiple systems simultaneously
+		h = QRFatorationSimultaneous(w,A)
 
-		QRFatorationSimultaneous(w,A)
+		# print h
+		print('-'*20)
+		print('A matriz resposta é:')
+		print('-'*20)
+		print(np.matrix(h))
 
 #=========================================================
 
@@ -192,7 +185,6 @@ def main():
 def computeCosSin1(w, i, j, k):
 
 	# compute sin(teta) and cos(teta)
-
 	if (abs(w[i][k]) > abs(w[j][k])):
 
 		# compute tau
@@ -234,36 +226,32 @@ def computeCosSin2(w, i, j, k):
 #=========================================================
 
 # apply 1 Givens' Rotation
-# the 3rd given algorithm
-def RotGivens(w, i, j, k, cos, sin, m): # m = len(w[0])
+# use vectorization instead of a for loop (like RotGivens2), much faster
+def RotGivens(w, i, j, k, cos, sin, m):
 
-	# FAZER VETORIZAÇÃO (MIKI FEZ ASSIM TB)
-	# SAULO DISSE Q ACELERA FORTE
-	# SUBSTITUI O FOR: 
-	# FAZER MAIS ROTGIVENS TESTANDO (ESSE DE CIMA É O MAIS RAPIDO)
-	'''
-	for r in range(0,m = len(w[0])): # OU PASSAR M COMO ENTRADA TB
-
-		aux = cos*w[i][r] - sin*w[j][r]
-
-		w[j][r] = sin*w[i][r] + cos*w[j][r]
-
-		w[i][r] = aux
-
-	'''
 	w[i,0:m] , w[j,0:m] = cos * w[i,0:m] - sin * w[j,0:m] , sin *w[i,0:m] + cos * w[j,0:m]
 
+#=========================================================
+
+# apply 1 Givens' Rotation
+# use a for loop, slower
+def RotGivens2(w, i, j, k, cos, sin, m):
+
+	for r in range(0,m):
+
+		aux = cos*w[i][r] - sin*w[j][r]
+		w[j][r] = sin*w[i][r] + cos*w[j][r]
+		w[i][r] = aux
 
 #=========================================================
 
 # apply sucessives Givens' Rotations in a convenient order
-# the 1st given algorithm
 def QRFatoration(w,b):
 
-	# TB DA P OBTER M ASSIM: m = w.shape[1]
 	n = len(w)
 	m = len(w[0])
 
+	# apply sucessives Givens Rotations, until W becomes R (a triangular superior matrix)
 	for k in range (0, m):
 
 		for j in range (n-1, k, -1):
@@ -272,19 +260,19 @@ def QRFatoration(w,b):
 
 			if (w[j][k] != 0): 
 
-				# apply a Givens' Rotation to matrix W
-
+				# compute cos(teta) and sin(teta) to be used in RotGivens
 				cos, sin = computeCosSin1(w, i, j, k)
 
-				RotGivens(w, i, j, k, cos, sin, m) # passar cos e sin como argumento
+				# apply a Givens' Rotation to matrix W and vector b
+				RotGivens(w, i, j, k, cos, sin, m)
 				RotGivens(b, i, j, k, cos, sin, 1)
 
-	# AGORA W JÁ É R
-	# LETSS
+	# With this, W was transformed in R (a triangular superior matrix)
 
-	# CRIAR VETOR X
+	# generates the vector x, which will hold the solution
 	x = np.zeros((m))
 
+	# solves the system to find each coordinate of vector x
 	for k in range(m-1,-1,-1):
 
 		summation = 0
@@ -295,22 +283,18 @@ def QRFatoration(w,b):
 
 		x[k] = (b[k] - summation) / w[k][k]
 
-	#printVector(x)
-	print(np.matrix(x))
-
-	# AE CARAI TEMO O X!!!
+	return x
 
 #=========================================================
 
 # apply sucessives Givens' Rotations in a convenient order
-# the 1st given algorithm
 def QRFatorationSimultaneous(w,A):
 
-	# TB DA P OBTER M ASSIM: m = w.shape[1]
 	n = len(w)
 	p = len(w[0])
 	m = len(A[0])
 
+	# apply sucessives Givens Rotations, until W becomes R (a triangular superior matrix)
 	for k in range (0, p):
 
 		for j in range (n-1, k, -1):
@@ -319,19 +303,19 @@ def QRFatorationSimultaneous(w,A):
 
 			if (w[j][k] != 0): 
 
-				# apply a Givens' Rotation to matrix W
-
+				# compute cos(teta) and sin(teta) to be used in RotGivens
 				cos, sin = computeCosSin1(w, i, j, k)
 
-				RotGivens(w, i, j, k, cos, sin, p) # passar cos e sin como argumento
+				# apply a Givens' Rotation to matrix W and A
+				RotGivens(w, i, j, k, cos, sin, p)
 				RotGivens(A, i, j, k, cos, sin, m)
 
-	# AGORA W JÁ É R
-	# LETSS
+	# With this, W was transformed in R (a triangular superior matrix)
 
-	# CRIAR VETOR X
+	# generates the vector x, which will hold the solution
 	h = np.zeros((p,m))
 
+	# solves the system to find each entry of matrix A
 	for k in range(p-1,-1,-1):
 
 		for j in range(0,m):
@@ -350,76 +334,7 @@ def QRFatorationSimultaneous(w,A):
 
 				h[k][j] = (A[k][j] - summation) / w[k][k]
 
-	#printVector(x)
-	print(np.matrix(h))
-
-	# AE CARAI TEMO O X!!!
-
-#=========================================================
-'''
-# solve the system of equations
-# the 2nd given algorithm
-def solveSystem(w, b, x):
-
-	# TIRAR ESSA POHA
-
-	for k in range(1,m):
-
-		for j in range(n, k,-1):
-
-			i = j-1
-
-			if(w[j][k] != 0):
-
-				# apply a Givens' Rotation to matrix W
-				RotGivens1(w, i, j, k)
-	# TIRAR ^
-
-	# solve the resulting triangular system
-	# since w is always overwritted, it'll have the R values at the end
-	for k in range(m-1,-1,-1):
-
-		summation = 0
-
-		for j in range(k+1,m):
-
-			summation += w[k][j]*x[j]
-
-		x[k] = (b[k] - summation) / w[k][k]
-
-	# APAGAR ESSA FUNÇÃO TODA
-'''
-#=========================================================
-
-# print the given matrix
-# just for testing
-def printMatrix(matrix):
-
-	print()
-	print('MATRIX:')
-	print('-'*2*len(matrix))
-
-	for i in range(len(matrix)):
-
-		for j in range(len(matrix[i])):
-
-			print(matrix[i][j], end = ' ')
-
-		print()
-
-	print('-'*2*len(matrix))
-
-#=========================================================
-
-# print the given vector
-# just for testing
-def printVector(vector):
-
-	for i in range(0,len(vector)):
-
-		print(vector[i], end = ' ')
-
-	print()
+	return h
 
 #=========================================================
 main()
