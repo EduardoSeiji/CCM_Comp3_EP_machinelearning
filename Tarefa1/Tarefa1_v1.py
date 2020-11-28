@@ -44,7 +44,7 @@ def main():
 		b = np.ones((n,1))
 
 		# runs the QR factorization
-		x = QRFatoration(w,b)
+		x = QRfactorization(w,b)
 
 		# print x
 		print('-'*20)
@@ -82,7 +82,7 @@ def main():
 			b[i] = i
 
 		# runs the QR factorization
-		x = QRFatoration(w,b)
+		x = QRfactorization(w,b)
 
 		# print x
 		print('-'*20)
@@ -127,7 +127,7 @@ def main():
 			A[i][2] = 2*(i+1) - 1
 
 		# runs QR factorization in in multiple systems simultaneously
-		h = QRFatorationSimultaneous(w,A)
+		h = QRfactorizationSimultaneous(w,A)
 
 		# print h
 		print('-'*20)
@@ -170,7 +170,7 @@ def main():
 			A[i][2] = 2*(i+1) - 1
 
 		# runs QR factorization in in multiple systems simultaneously
-		h = QRFatorationSimultaneous(w,A)
+		h = QRfactorizationSimultaneous(w,A)
 
 		# print h
 		print('-'*20)
@@ -246,7 +246,7 @@ def RotGivens2(w, i, j, k, cos, sin, m):
 #=========================================================
 
 # apply sucessives Givens' Rotations in a convenient order
-def QRFatoration(w,b):
+def QRfactorization(w,b):
 
 	n = len(w)
 	m = len(w[0])
@@ -288,7 +288,7 @@ def QRFatoration(w,b):
 #=========================================================
 
 # apply sucessives Givens' Rotations in a convenient order
-def QRFatorationSimultaneous(w,A):
+def QRfactorizationSimultaneous(w,A):
 
 	n = len(w)
 	p = len(w[0])
