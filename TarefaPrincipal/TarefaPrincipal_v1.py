@@ -118,8 +118,9 @@ def main():
 			Wdtotal.append(np.genfromtxt("treinado/treinado_" + str(i) + ".txt"))
 
 	# number of images used in testing
-	#n_test = 10000
-	n_test = int(input('> Digite o valor de n_test (1 a 10k): '))
+	n_test = 10000
+	print('> Digite o valor de n_test (1 a 10k): 10000')
+	#n_test = int(input('> Digite o valor de n_test (1 a 10k): '))
 
 	# executes the testing
 	DigitandError = testing(n_test, Wdtotal)
@@ -153,13 +154,9 @@ def training(n,p,ndig_treino):
 		# A = Wd.H
 		A = np.genfromtxt("dados/dados_mnist/train_dig" + str(i) + ".txt")[0:784,0:ndig_treino]/255.0
 
-		print('Dados lidos')
-
 		start = time.time()
 
-		print('Bora p o factorizate')
 		Wd,H = factorizate(A,n,p)
-		print('Factorizate feito')
 
 		# append Wd to Wdtotal
 		Wdtotal.append(Wd)
@@ -170,17 +167,17 @@ def training(n,p,ndig_treino):
 
 	endTotal = time.time()
 	print('Treinamento completo! (', int(endTotal - startTotal), 's)')
-
+	'''
 	startSaving = time.time()
-
-	print('Salvando matriz de treino...', end = ' ')
+	
+	#print('Salvando matriz de treino...', end = ' ')
 	for i in range(10):
 
 		np.savetxt("treinado/treinado_" + str(i) + ".txt",Wdtotal[i],fmt='%f')
 
 	endSaving = time.time()
 	print(int(endSaving - startSaving), 's')
-
+	'''
 	return Wdtotal
 
 #=========================================================
@@ -212,7 +209,8 @@ def testing(n_test, Wdtotal):
 		Acopy = A.copy()
 
 		# solve the system Wd.H = A
-		H = QRfactorizationSimultaneous(Wd,Acopy)
+		H = QRFactorizationSimultaneousWithRotgivens(Wd,Acopy)
+		#H = QRfactorizationSimultaneousWithHouseholder(Wd,Acopy)
 
 		Erro = (A - np.dot(Wdtotal[j],H))**2
 
@@ -255,13 +253,29 @@ def checking(DigitandError):
 
 	errors = np.zeros((n,2))
 
-	counter = 0
+	errorPerDigit = np.zeros((10))
+	amountOfDigit = np.zeros((10))
 
 	for i in range(n):
 
-		if(DigitandError[i,0] == answers[i]): rightAnswers += 1
+		if(DigitandError[i,0] == answers[i]): 
 
-	print('O índice de acertos é de ', (float(rightAnswers))*100/n, '%')
+			rightAnswers += 1
+
+			amountOfDigit[int(answers[i])] += 1
+
+		else: 
+
+			amountOfDigit[int(answers[i])] += 1
+
+			errorPerDigit[int(answers[i])] += 1
+
+	for i in range(10):
+
+		print('O índice de acertos para', i,'é ', round((100-errorPerDigit[i]*100/amountOfDigit[i]),2), '%')
+
+
+	print('O índice de acertos total é  ', (float(rightAnswers))*100/n, '%')
 
 #=========================================================
 #=========================================================
@@ -296,7 +310,8 @@ def factorizate(A,n,p):
 			W[0:n,j] = W[0:n,j]/math.sqrt(s)
 
 		# solve the MMQ problem W H = A, determining H
-		H = QRfactorizationSimultaneous(W,A)
+		H = QRFactorizationSimultaneousWithRotgivens(W,A)
+		#H = QRfactorizationSimultaneousWithHouseholder(W,A)
 	
 		H = H.clip(min = 1e-10)
 
@@ -304,7 +319,8 @@ def factorizate(A,n,p):
 
 		Hcopy = np.copy(H)
 		Ht = H.T
-		Wt = QRfactorizationSimultaneous(Ht,At)
+		Wt = QRFactorizationSimultaneousWithRotgivens(Ht,At)
+		#Wt = QRfactorizationSimultaneousWithHouseholder(Ht,At)
 
 		At = np.copy(Atcopy)
 
@@ -357,16 +373,8 @@ def computeCosSin1(w, i, j, k):
 
 #=========================================================
 
-# apply 1 Givens' Rotation
-# use vectorization instead of a for loop (like RotGivens2), much faster
-def RotGivens(w, i, j, k, cos, sin, m):
-
-	w[i,k:m] , w[j,k:m] = cos * w[i,k:m] - sin * w[j,k:m] , sin *w[i,k:m] + cos * w[j,k:m]
-
-#=========================================================
-
 # apply sucessives Givens' Rotations in a convenient order
-def QRfactorizationSimultaneous(w,A):
+def QRFactorizationSimultaneousWithRotgivens(w,A):
 
 	n = A.shape[0]
 	p = w.shape[1]
@@ -385,8 +393,6 @@ def QRfactorizationSimultaneous(w,A):
 				cos, sin = computeCosSin1(w, i, j, k)
 
 				# apply a Givens' Rotation to matrix W and A
-				#RotGivens(w, i, j, k, cos, sin, p)
-				#RotGivens(A, i, j, 0, cos, sin, m)	
 				w[i,k:p] , w[j,k:p] = cos * w[i,k:p] - sin * w[j,k:p] , sin *w[i,k:p] + cos * w[j,k:p]
 				A[i,0:m] , A[j,0:m] = cos * A[i,0:m] - sin * A[j,0:m] , sin *A[i,0:m] + cos * A[j,0:m]
 
@@ -400,13 +406,57 @@ def QRfactorizationSimultaneous(w,A):
 
 		for k in range(p-1,-1,-1):
 
-			'''
-			summation = 0
-			
-			for i in range(k+1,p):
+			summation = np.sum(w[k,k+1:p]*h[k+1:p,j])
 
-				summation += w[k,i]*h[i,j]
-			'''
+			if(w[k,k] == 0):
+
+				h[k,j] = (A[k,j] - summation) / 1e-10	
+			
+			else:			
+
+				h[k,j] = (A[k,j] - summation) / w[k,k]
+
+	return h
+
+#=========================================================
+
+# apply sucessives Givens' Rotations in a convenient order
+def QRfactorizationSimultaneousWithHouseholder(w,A):
+
+	n = A.shape[0]
+	p = w.shape[1]
+	m = A.shape[1]
+
+	for k in range(p):
+
+		x = w[k:n,k]
+
+		norm_x = math.sqrt((x[0:] ** 2).sum())
+
+		rho = -np.sign(x[0])
+
+		uk = x[0] - rho * norm_x
+
+		u = x / uk
+
+		u[0] = 1
+
+		beta = -rho * uk / norm_x
+
+		w[k:n, k:p] = w[k:n, k:p] - beta * np.outer(u, u).dot(w[k:n, k:p])
+
+		a[k:n, 0:m] = a[k:n, 0:m] - beta * np.outer(u, u).dot(a[k:n, 0:m])
+
+	# With this, W was transformed in R (a triangular superior matrix)
+
+	# generates the vector x, which will hold the solution
+	h = np.zeros((p,m))
+
+	# solves the system to find each entry of matrix A
+	for j in range(0,m):
+
+		for k in range(p-1,-1,-1):
+
 			summation = np.sum(w[k,k+1:p]*h[k+1:p,j])
 
 			if(w[k,k] == 0):
