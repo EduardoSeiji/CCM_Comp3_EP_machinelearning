@@ -90,19 +90,44 @@ def main():
 	print('Tarefa Principal')
 	print('-'*18)
 
-	# number of columms of W and lines of H (degrees of freedom)
-	p = int(input('Digite o valor de p (5, 10, 15): '))
+	Wdtotal = []
 
-	# number of images used in the training of each digit
-	ndig_treino = int(input('Digite o valor de ndig_treino (100, 1000, 4000): '))
+	a = input('Deseja treinar(a) ou testar(b)? ')
+
+	# go to the training
+	if(a == 'a'):
+
+		# number of columms of W and lines of H (degrees of freedom)
+		#p = 5
+		p = int(input('> Digite o valor de p (5, 10, 15): '))
+
+		# number of images used in the training of each digit
+		#ndig_treino = 100
+		ndig_treino = int(input('> Digite o valor de ndig_treino (100, 1k, 4k): '))
+
+		#executes the training
+		Wdtotal = training(n,p,ndig_treino)
+
+	# import data to go to straight the testing
+	if(a == 'b'):
+
+		print('Carregando classificadores...')
+
+		for i in range(10):
+
+			Wdtotal.append(np.genfromtxt("treinado/treinado_" + str(i) + ".txt"))
 
 	# number of images used in testing
+	#n_test = 10000
+	n_test = int(input('> Digite o valor de n_test (1 a 10k): '))
 
+	# executes the testing
+	DigitandError = testing(n_test, Wdtotal)
 
-	# executes the training
-	training(n,p,ndig_treino)
-
-
+	# check the result
+	# 88% piupiu
+	# 94% p caso mais osso
+	checking(DigitandError)
 
 #=========================================================
 
@@ -114,7 +139,7 @@ def training(n,p,ndig_treino):
 	Wdtotal = []
 
 	print('-'*13)
-	print('Treinando...')
+	print('Treinando:')
 	print('-'*13)
 
 	startTotal = time.time()
@@ -122,44 +147,126 @@ def training(n,p,ndig_treino):
 	# train the classificators generating a Wd matrix for each digit
 	for i in range(10):
 
-		start = time.time()
-
-		print('Treinando o dígito ', i, '...')
-
-		# read the train_digX.txt archive, x in [0,9]
-		# generating a matrix A (n=784 x m=ndig_treino)
-		A = np.genfromtxt("dados/dados_mnist/train_dig" + str(i) + ".txt")[:,:ndig_treino]
+		print('Treinando o dígito ', i, '...', end = '  ')
 
 		# calculate the matrix Wd (n x p), by factorizating
 		# A = Wd.H
-		Wd,H = factorizate(A,n,ndig_treino,p)
+		A = np.genfromtxt("dados/dados_mnist/train_dig" + str(i) + ".txt")[0:784,0:ndig_treino]/255.0
+
+		print('Dados lidos')
+
+		start = time.time()
+
+		print('Bora p o factorizate')
+		Wd,H = factorizate(A,n,p)
+		print('Factorizate feito')
 
 		# append Wd to Wdtotal
 		Wdtotal.append(Wd)
-
 
 		end = time.time()
 
 		print(int(end - start), 's')
 
-	print('Treinamento completo!')
 	endTotal = time.time()
-	print(int(endTotal - startTotal), 's')
+	print('Treinamento completo! (', int(endTotal - startTotal), 's)')
+
+	startSaving = time.time()
+
+	print('Salvando matriz de treino...', end = ' ')
+	for i in range(10):
+
+		np.savetxt("treinado/treinado_" + str(i) + ".txt",Wdtotal[i],fmt='%f')
+
+	endSaving = time.time()
+	print(int(endSaving - startSaving), 's')
+
+	return Wdtotal
 
 #=========================================================
 
-# use the test_images.txt archive
-# each txt is 784x10000 (each columm is a testing image)
-# use the test_index.txt archive
-# it gives the answers
-#def testing():
+# use the test_images.txt archive, 784xn_test (each columm is a testing image)
+def testing(n_test, Wdtotal):
+
+	print('-'*13)
+	print('Testando:')
+	print('-'*13)
+
+	startTotal = time.time()
+
+	# generate a matrix A (784 x n_test)
+	# each columm is an image to be tested
+	A = np.genfromtxt("dados/dados_mnist/test_images.txt")[:,:n_test]
+
+	# vector that holds the most probable digit and its error
+	DigitandError = (np.ones((n_test,2)))*1e10
+
+	# checks which digit is the most probable for this image
+	for j in range(10):
+
+		startTesting = time.time()
+
+		print('Testando dígito ', j, '...', end = ' ')
+
+		Wd = Wdtotal[j].copy() # tanto faz essa linha
+		Acopy = A.copy()
+
+		# solve the system Wd.H = A
+		H = QRfactorizationSimultaneous(Wd,Acopy)
+
+		Erro = (A - np.dot(Wdtotal[j],H))**2
+
+		aux = np.zeros((784))
+
+		for i in range(n_test):
+
+			aux[0:784] = Erro[0:784,i]
+
+			E = math.sqrt(sum(aux))
+
+			if(E < DigitandError[i,1]):
+
+				DigitandError[i,0] = j
+				DigitandError[i,1] = E
+
+		endTesting = time.time()
+		print(int(endTesting - startTesting), 's')
+
+	endTotal = time.time()
+	print('Teste completo! (', int(endTotal - startTotal), 's)')
+		
+
+	return DigitandError
+
+#=========================================================
+
+def checking(DigitandError):
+
+	answers = np.genfromtxt("dados/dados_mnist/test_index.txt")
+
+	n = DigitandError.shape[0]
+
+	rightAnswers = 0
+
+	print('-'*13)
+	print('Checando:')
+	print('-'*13)
 
 
+	errors = np.zeros((n,2))
+
+	counter = 0
+
+	for i in range(n):
+
+		if(DigitandError[i,0] == answers[i]): rightAnswers += 1
+
+	print('O índice de acertos é de ', (float(rightAnswers))*100/n, '%')
 
 #=========================================================
 #=========================================================
 
-def factorizate(A,n,m,p):
+def factorizate(A,n,p):
 
 	# generate a random matrix W, with all entries in [0,1[
 	W = np.random.rand(n,p)
@@ -171,41 +278,35 @@ def factorizate(A,n,m,p):
 	Einitial = 1
 	Efinal = 0
 
-	while(abs(Einitial-Efinal) > 1e-5 or itmax < 100):
+	At = A.T
+
+	Atcopy = np.copy(At)
+
+	A = np.copy(Acopy)
+
+	while(abs(Einitial-Efinal) > 1e-5 and itmax < 100):
 
 		itmax += 1
 
 		# normalize W
 		for j in range(p):
 
-			s = 0
+			s = np.sum(W[0:n,j]**2)
 
-			for i in range(n):
-
-
-				s += (W[i][j])**2
-
-			for i in range(n):
-
-				W[i][j] = W[i][j]/math.sqrt(s)
+			W[0:n,j] = W[0:n,j]/math.sqrt(s)
 
 		# solve the MMQ problem W H = A, determining H
 		H = QRfactorizationSimultaneous(W,A)
 	
 		H = H.clip(min = 1e-10)
 
-		# compute At, transposed
-		A = np.copy(Acopy)
-		At = A.T
 		A = np.copy(Acopy)
 
-		# solve the MMQ problem Ht Wt = At, determining Wt
-		# ver como usar a tarefa1 p isso
 		Hcopy = np.copy(H)
 		Ht = H.T
 		Wt = QRfactorizationSimultaneous(Ht,At)
-		# ah nao, cipa a tarefa 2 seja implementar o algoritmo p isso
 
+		At = np.copy(Atcopy)
 
 		# compute W
 		W = Wt.T
@@ -214,36 +315,13 @@ def factorizate(A,n,m,p):
 
 		# calculate the error
 		Einitial = Efinal
-		Efinal = calculateError(Acopy,W,Hcopy)
 
-		
+		WH = np.dot(W,Hcopy)
 
-		# conditions to exit the while
-		#if(abs(Einitial-Efinal) < 1e-5): break
-		#if(itmax == 100): break
+		Efinal = np.sum((Acopy - WH)**2)
+		#Efinal = np.square(Acopy-np.matmul(W,H)).sum()
 
 	return W,Hcopy
-
-#=========================================================
-
-# calculate the error (absolute) value
-def calculateError(Acopy, W, H):
-
-	E = 0
-
-	# calculate WH
-	WH = np.dot(W,H)
-
-	n = len(Acopy)
-	m = len(Acopy[0])
-
-	for i in range(n):
-
-		for j in range(m):
-
-			E += (Acopy[i][j] - WH[i][j])**2
-
-	return E
 
 #=========================================================
 #=========================================================
@@ -253,13 +331,13 @@ def calculateError(Acopy, W, H):
 def computeCosSin1(w, i, j, k):
 
 	# compute sin(teta) and cos(teta)
-	if (abs(w[i][k]) > abs(w[j][k])):
+	if (abs(w[i,k]) > abs(w[j,k])):
 
 		# compute tau
-		T = -float(w[j][k])/w[i][k]
+		T = -w[j,k]/w[i,k]
 
 		# compute cos(teta)
-		cos = 1/( ( 1+T**2 ) ** (1/2) )
+		cos = 1/( math.sqrt( 1+(T)**2 ) )
 
 		# compute sin(teta)
 		sin = cos*T
@@ -267,27 +345,13 @@ def computeCosSin1(w, i, j, k):
 	else:
 
 		# compute tau
-		T = -float(w[i][k])/w[j][k]
+		T = -w[i,k]/w[j,k]
 
 		# compute sin(teta)
-		sin = 1/( ( 1+T**2 ) ** (1/2) )
+		sin = 1/( math.sqrt( 1+(T)**2 ) )
 
 		# compute cos(teta)
 		cos = sin*T
-
-	return cos, sin
-
-#=========================================================
-
-# compute cos(teta) and sin(teta)
-# less numerically stable
-def computeCosSin2(w, i, j, k):
-
-	# compute cos(teta)
-	cos = w[i][k] / (w[i][k]**2 + w[j][k]**2)**(1/2)
-
-	# compute sin(teta)
-	sin = -w[j][k] / (w[i][k]**2 + w[j][k]**2)**(1/2)
 
 	return cos, sin
 
@@ -297,70 +361,16 @@ def computeCosSin2(w, i, j, k):
 # use vectorization instead of a for loop (like RotGivens2), much faster
 def RotGivens(w, i, j, k, cos, sin, m):
 
-	w[i,0:m] , w[j,0:m] = cos * w[i,0:m] - sin * w[j,0:m] , sin *w[i,0:m] + cos * w[j,0:m]
-
-#=========================================================
-
-# apply 1 Givens' Rotation
-# use a for loop, slower
-def RotGivens2(w, i, j, k, cos, sin, m):
-
-	for r in range(0,m):
-
-		aux = cos*w[i][r] - sin*w[j][r]
-		w[j][r] = sin*w[i][r] + cos*w[j][r]
-		w[i][r] = aux
-
-#=========================================================
-
-# apply sucessives Givens' Rotations in a convenient order
-def QRfactorization(w,b):
-
-	n = len(w)
-	m = len(w[0])
-
-	# apply sucessives Givens Rotations, until W becomes R (a triangular superior matrix)
-	for k in range (0, m):
-
-		for j in range (n-1, k, -1):
-
-			i = j - 1
-
-			if (w[j][k] != 0): 
-
-				# compute cos(teta) and sin(teta) to be used in RotGivens
-				cos, sin = computeCosSin1(w, i, j, k)
-
-				# apply a Givens' Rotation to matrix W and vector b
-				RotGivens(w, i, j, k, cos, sin, m)
-				RotGivens(b, i, j, k, cos, sin, 1)
-
-	# With this, W was transformed in R (a triangular superior matrix)
-
-	# generates the vector x, which will hold the solution
-	x = np.zeros((m))
-
-	# solves the system to find each coordinate of vector x
-	for k in range(m-1,-1,-1):
-
-		summation = 0
-
-		for j in range(k+1,m):
-
-			summation += w[k][j]*x[j]
-
-		x[k] = (b[k] - summation) / w[k][k]
-
-	return x
+	w[i,k:m] , w[j,k:m] = cos * w[i,k:m] - sin * w[j,k:m] , sin *w[i,k:m] + cos * w[j,k:m]
 
 #=========================================================
 
 # apply sucessives Givens' Rotations in a convenient order
 def QRfactorizationSimultaneous(w,A):
 
-	n = len(A)
-	p = len(w[0])
-	m = len(A[0])
+	n = A.shape[0]
+	p = w.shape[1]
+	m = A.shape[1]
 
 	# apply sucessives Givens Rotations, until W becomes R (a triangular superior matrix)
 	for k in range (0, p):
@@ -369,14 +379,16 @@ def QRfactorizationSimultaneous(w,A):
 
 			i = j - 1
 
-			if (w[j][k] != 0): 
+			if (w[j,k] != 0): 
 
 				# compute cos(teta) and sin(teta) to be used in RotGivens
 				cos, sin = computeCosSin1(w, i, j, k)
 
 				# apply a Givens' Rotation to matrix W and A
-				RotGivens(w, i, j, k, cos, sin, p)
-				RotGivens(A, i, j, k, cos, sin, m)
+				#RotGivens(w, i, j, k, cos, sin, p)
+				#RotGivens(A, i, j, 0, cos, sin, m)	
+				w[i,k:p] , w[j,k:p] = cos * w[i,k:p] - sin * w[j,k:p] , sin *w[i,k:p] + cos * w[j,k:p]
+				A[i,0:m] , A[j,0:m] = cos * A[i,0:m] - sin * A[j,0:m] , sin *A[i,0:m] + cos * A[j,0:m]
 
 	# With this, W was transformed in R (a triangular superior matrix)
 
@@ -384,23 +396,26 @@ def QRfactorizationSimultaneous(w,A):
 	h = np.zeros((p,m))
 
 	# solves the system to find each entry of matrix A
-	for k in range(p-1,-1,-1):
+	for j in range(0,m):
 
-		for j in range(0,m):
+		for k in range(p-1,-1,-1):
 
+			'''
 			summation = 0
-
+			
 			for i in range(k+1,p):
 
-				summation += w[k][i]*h[i][j]
+				summation += w[k,i]*h[i,j]
+			'''
+			summation = np.sum(w[k,k+1:p]*h[k+1:p,j])
 
-			if(w[k][k] == 0):
+			if(w[k,k] == 0):
 
-				h[k][j] = (A[k][j] - summation) / 1e-10	
+				h[k,j] = (A[k,j] - summation) / 1e-10	
 			
 			else:			
 
-				h[k][j] = (A[k][j] - summation) / w[k][k]
+				h[k,j] = (A[k,j] - summation) / w[k,k]
 
 	return h
 
