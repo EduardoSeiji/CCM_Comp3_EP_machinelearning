@@ -2,15 +2,11 @@
 # Task 2
 # 
 # goal: factorizate A (nxm) = W (nxp) x H (pxm)
-#
-#
-#
-#
-#
 #---------------------------------------------------------
 
 import math
 import numpy as np
+import time
 
 def main():
 
@@ -137,7 +133,7 @@ def calculateError(Acopy, W, H):
 
 # compute cos(teta) and sin(teta)
 # more numerically stable
-def computeCosSin1(w, i, j, k):
+def computeCosSin(w, i, j, k):
 
 	# compute sin(teta) and cos(teta)
 	if (abs(w[i][k]) > abs(w[j][k])):
@@ -216,7 +212,7 @@ def QRfactorization(w,b):
 			if (w[j][k] != 0): 
 
 				# compute cos(teta) and sin(teta) to be used in RotGivens
-				cos, sin = computeCosSin1(w, i, j, k)
+				cos, sin = computeCosSin(w, i, j, k)
 
 				# apply a Givens' Rotation to matrix W and vector b
 				RotGivens(w, i, j, k, cos, sin, m)
@@ -259,7 +255,7 @@ def QRfactorizationSimultaneous(w,A):
 			if (w[j][k] != 0): 
 
 				# compute cos(teta) and sin(teta) to be used in RotGivens
-				cos, sin = computeCosSin1(w, i, j, k)
+				cos, sin = computeCosSin(w, i, j, k)
 
 				# apply a Givens' Rotation to matrix W and A
 				RotGivens(w, i, j, k, cos, sin, p)

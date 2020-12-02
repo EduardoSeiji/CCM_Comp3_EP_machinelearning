@@ -4,84 +4,12 @@
 # Goal: teach a machine how to read manuscripted digits
 #
 # The non-negative matrix factoration will be used
-#
-#
-#
-#
-#
 #---------------------------------------------------------
-
-# TAREFA 2 É O HEART
-
-'''
-TAREFA PRINCIPAL
-
-INPUTS:
-
-INSERIR P. QUANTO MAIOR, MAIS GL, MAIS PRECISO. 
-é o numero de colunas de W e linhas de H (acho). 
-número de gl da fatoração. 
-Aumenta bastante o tempo computacional. 
-tempo e p sao lineares
-
-SE NDIG TREINO ALTO, MAIS PRECISO. 
-é usado p ler o txt por digito (train dig n). 
-Determina quantos digitos pegar por txt (max10000 acho). 
-tempo e ndig tem uma relação estranha
-
-NUMERO DE TESTES: NUMERO DE IMAGENS DO BANCO DE DADOS (10000).
-usa na etapa de classificar. nao demora mto, leva uns 3s/digito
-
-
-COMEÇAR O CRONOMETRO: FROM TIME IMPORT TIME
-
-
-MATRIZ WDTOT VAI INICIAR VAZIA
-VETOR CJ TB (ERROS DAS NORMAS EUCLIDIANAS, P DECIDIR QUAL O DIGITO)
-
-FASE DE APRENDIZAGEM (PARTE Q DEMORA, VER ONDE DA P OTIMIZAR: INTEGRAR FUNÇÃO, VETORIZAR O Q PUDER (SOMA, ERRO)...)
-FOR I IN RANGE 10(10 DIGITOS)
-	FUNÇÃO TREINA DIGITO
-		LER
-		USAR A TAREFA2 (FATORAR Ad = WdH)
-		VOU QUERER O Wd, DE CADA DIGITO
-		DAR APPEND NA WDTOT
-
-TREINAMENTO ACABOU
-
-AGORA COMEÇA A CLASSIFICAÇÃO:
-
-NP.LOADTEXT(DADOSMNIST...)
-
-RODAR UM FOR OU VETORIZAÇÃO
-
-TEMPO:
-	TREINAMENTO: 
-		10-15s/digito (no caso mais facil, 100, 10mil, 5)
-		média 300s/digito (no caso mais dificil, 4000, 10000, 15)
-	colocar o cronometro dentro do laço for, p ver o tempo de cada digito
-
-passo 3: calcular o % de erro
-	
-	pegar o gabarito (text index txt, c 10000 linhas, c o digito n. matrix), copiar, fazer função q conta os acertos
-	na matriz contadora (2x10)
-	printar o acerto em cada digito e o geral
-
-	piupiu: acuracia smp acima de 90% (tem uns digitos q nao kk) 
-	se aumentar o p, ele nivela os piores, melhora os q tava ruim
-
-
-relatório do Piupiu: 32 páginas
-dica: colocar varias fotos e fazer uma conclusao baseada na tarefa final
-
-cipa fazer o metodo de househholder p testar (Maitah e Miki falaram q é lerdao)
-'''
 
 import math
 import numpy as np
 import time
 
-# created just for code testing
 def main():
 
 	n = 784
@@ -98,11 +26,9 @@ def main():
 	if(a == 'a'):
 
 		# number of columms of W and lines of H (degrees of freedom)
-		#p = 5
 		p = int(input('> Digite o valor de p (5, 10, 15): '))
 
 		# number of images used in the training of each digit
-		#ndig_treino = 100
 		ndig_treino = int(input('> Digite o valor de ndig_treino (100, 1k, 4k): '))
 
 		#executes the training
@@ -118,16 +44,12 @@ def main():
 			Wdtotal.append(np.genfromtxt("treinado/treinado_" + str(i) + ".txt"))
 
 	# number of images used in testing
-	n_test = 10000
-	print('> Digite o valor de n_test (1 a 10k): 10000')
-	#n_test = int(input('> Digite o valor de n_test (1 a 10k): '))
+	n_test = int(input('> Digite o valor de n_test (1 a 10k): '))
 
 	# executes the testing
 	DigitandError = testing(n_test, Wdtotal)
 
 	# check the result
-	# 88% piupiu
-	# 94% p caso mais osso
 	checking(DigitandError)
 
 #=========================================================
@@ -136,12 +58,12 @@ def main():
 # each txt is 784x5300 (each columm is a digit image)
 def training(n,p,ndig_treino):
 
-	# matrix which will hold all the Wds (classificators)
-	Wdtotal = []
-
 	print('-'*13)
 	print('Treinando:')
 	print('-'*13)
+
+	# matrix which will hold all the Wds (classificators)
+	Wdtotal = []
 
 	startTotal = time.time()
 
@@ -167,17 +89,7 @@ def training(n,p,ndig_treino):
 
 	endTotal = time.time()
 	print('Treinamento completo! (', int(endTotal - startTotal), 's)')
-	'''
-	startSaving = time.time()
-	
-	#print('Salvando matriz de treino...', end = ' ')
-	for i in range(10):
-
-		np.savetxt("treinado/treinado_" + str(i) + ".txt",Wdtotal[i],fmt='%f')
-
-	endSaving = time.time()
-	print(int(endSaving - startSaving), 's')
-	'''
+ 
 	return Wdtotal
 
 #=========================================================
@@ -205,7 +117,7 @@ def testing(n_test, Wdtotal):
 
 		print('Testando dígito ', j, '...', end = ' ')
 
-		Wd = Wdtotal[j].copy() # tanto faz essa linha
+		Wd = Wdtotal[j].copy()
 		Acopy = A.copy()
 
 		# solve the system Wd.H = A
@@ -233,23 +145,22 @@ def testing(n_test, Wdtotal):
 	endTotal = time.time()
 	print('Teste completo! (', int(endTotal - startTotal), 's)')
 		
-
 	return DigitandError
 
 #=========================================================
 
+# use the test_index.txt to check the anwers given by the algorithm
 def checking(DigitandError):
+
+	print('-'*13)
+	print('Checando:')
+	print('-'*13)
 
 	answers = np.genfromtxt("dados/dados_mnist/test_index.txt")
 
 	n = DigitandError.shape[0]
 
 	rightAnswers = 0
-
-	print('-'*13)
-	print('Checando:')
-	print('-'*13)
-
 
 	errors = np.zeros((n,2))
 
@@ -273,7 +184,6 @@ def checking(DigitandError):
 	for i in range(10):
 
 		print('O índice de acertos para', i,'é ', round((100-errorPerDigit[i]*100/amountOfDigit[i]),2), '%')
-
 
 	print('O índice de acertos total é  ', (float(rightAnswers))*100/n, '%')
 
@@ -335,7 +245,6 @@ def factorizate(A,n,p):
 		WH = np.dot(W,Hcopy)
 
 		Efinal = np.sum((Acopy - WH)**2)
-		#Efinal = np.square(Acopy-np.matmul(W,H)).sum()
 
 	return W,Hcopy
 
@@ -445,7 +354,7 @@ def QRfactorizationSimultaneousWithHouseholder(w,A):
 
 		w[k:n, k:p] = w[k:n, k:p] - beta * np.outer(u, u).dot(w[k:n, k:p])
 
-		a[k:n, 0:m] = a[k:n, 0:m] - beta * np.outer(u, u).dot(a[k:n, 0:m])
+		A[k:n, 0:m] = A[k:n, 0:m] - beta * np.outer(u, u).dot(A[k:n, 0:m])
 
 	# With this, W was transformed in R (a triangular superior matrix)
 
