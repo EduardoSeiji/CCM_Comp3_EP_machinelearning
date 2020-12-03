@@ -229,7 +229,7 @@ def computeCosSin2(w, i, j, k):
 # use vectorization instead of a for loop (like RotGivens2), much faster
 def RotGivens(w, i, j, k, cos, sin, m):
 
-	w[i,0:m] , w[j,0:m] = cos * w[i,0:m] - sin * w[j,0:m] , sin *w[i,0:m] + cos * w[j,0:m]
+	w[i,k:m] , w[j,k:m] = cos * w[i,k:m] - sin * w[j,k:m] , sin *w[i,k:m] + cos * w[j,k:m]
 
 #=========================================================
 
@@ -265,7 +265,7 @@ def QRfactorization(w,b):
 
 				# apply a Givens' Rotation to matrix W and vector b
 				RotGivens(w, i, j, k, cos, sin, m)
-				RotGivens(b, i, j, k, cos, sin, 1)
+				RotGivens(b, i, j, 0, cos, sin, 1)
 
 	# With this, W was transformed in R (a triangular superior matrix)
 
