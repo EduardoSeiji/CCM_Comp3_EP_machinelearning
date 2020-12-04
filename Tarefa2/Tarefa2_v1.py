@@ -67,7 +67,6 @@ def factorizate(A,n,m,p):
 
 			for i in range(n):
 
-
 				s += (W[i][j])**2
 
 			for i in range(n):
@@ -85,13 +84,10 @@ def factorizate(A,n,m,p):
 		A = np.copy(Acopy)
 
 		# solve the MMQ problem Ht Wt = At, determining Wt
-		# ver como usar a tarefa1 p isso
 		Hcopy = np.copy(H)
 		Ht = H.T
 		Wt = QRfactorizationSimultaneous(Ht,At)
-		# ah nao, cipa a tarefa 2 seja implementar o algoritmo p isso
-
-
+		
 		# compute W
 		W = Wt.T
 
@@ -100,10 +96,6 @@ def factorizate(A,n,m,p):
 		# calculate the error
 		Einitial = Efinal
 		Efinal = calculateError(Acopy,W,Hcopy)
-
-		# conditions to exit the while
-		#if(abs(Einitial-Efinal) < 1e-5): break
-		#if(itmax == 100): break
 
 	return W,Hcopy
 
